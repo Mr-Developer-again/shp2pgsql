@@ -3,11 +3,18 @@
 #include <QFileDialog>
 #include <QString>
 #include <QMessageBox>
-#include <QFile>
 
+#include <iostream>
 #include <stdexcept>
 #include <regex>
-#include <stdio.h>
+#include <cstdio>
+#include <cstdlib>
+#include <limits>
+#include <string>
+#include <functional>
+#include <fstream>
+#include <chrono>
+#include <thread>
 
 ShapefileConversion::Shp2Postgresql::Shp2Postgresql(QWidget *parent)
     : QMainWindow(parent),
@@ -16,6 +23,7 @@ ShapefileConversion::Shp2Postgresql::Shp2Postgresql(QWidget *parent)
     this->_ui->setupUi(this);
     this->setFixedSize(this->geometry().width(), this->geometry().height());
 
+    this->_ui->sridSpinBox->setMaximum(std::numeric_limits<int>::max());
 
     QObject::connect(this->_ui->shapefilePathBrowseButton, SIGNAL(clicked()), this, SLOT(slot_shpPathBrowseButton()));
     QObject::connect(this->_ui->cancelButton, SIGNAL(clicked()), this, SLOT(slot_cancelButtonClicked()));
@@ -67,7 +75,7 @@ bool ShapefileConversion::Shp2Postgresql::userInputsAreValid() const
 
 
     // Validating input username
-    char* osName;
+    std::string osName;
 
 #if defined(__linux__)
     // linux username pattern
@@ -88,9 +96,11 @@ bool ShapefileConversion::Shp2Postgresql::userInputsAreValid() const
     if (!std::regex_match(this->_ui->usernameLineEdit->text().trimmed().toStdString(), validUsernamePattern))
     {
         char* message;
-        sprintf(message, "The input username is not a valid username for %s system", osName);
-            throw std::runtime_error(message);
+        sprintf(message, "The input username is not a valid username for %s system", osName.c_str());
+        throw std::runtime_error(message);
     }
+
+    return true;
 }
 
 void ShapefileConversion::Shp2Postgresql::slot_shpPathBrowseButton()
@@ -115,8 +125,72 @@ void ShapefileConversion::Shp2Postgresql::slot_importButtonClicked()
 {
     try
     {
-        if (this->allSectionsFilled() && this->userInputsAreValid())
-            ;
+        if (this->allSectionsFilled() and this->userInputsAreValid())
+        {
+            std::string shapefilePath = this->_ui->shapefilePathLineEdit->text().toStdString();
+            std::string srid = this->_ui->sridSpinBox->text().toStdString();
+            std::string dbName = this->_ui->dbNameLineEdit->text().toStdString();
+            std::string tableName = this->_ui->tableNameLineEdit->text().toStdString();
+            std::string hostAddr = this->_ui->hostIpAddrLineEdit->text().toStdString();
+            std::string username = this->_ui->usernameLineEdit->text().toStdString();
+
+            // changing stderr and stdout
+            std::unique_ptr<FILE, std::function<void(FILE*)>> fd_stderr(freopen("./.fd_stderr", "w", stderr), [](FILE* fd) -> void {
+                fclose(fd);
+            });
+
+            std::unique_ptr<FILE, std::function<void(FILE*)>> fd_stdout(freopen("./.fd_stdout", "w", stdout), [](FILE* fd) -> void {
+                fclose(fd);
+            });
+
+            if (NULL == fd_stderr || NULL == fd_stdout)
+            {
+                fputs("couldn't change stdout/stderr stream", stderr);
+                exit(EXIT_FAILURE);
+            }
+
+            std::stringstream command;
+            command << "shp2pgsql -s " << srid << " -I " << shapefilePath << " " << tableName
+                    << " | psql -U " << username << " -d " << dbName << " -h " << hostAddr
+                    << " -p 5434";
+            int status = system(command.str().c_str());
+
+        // restoring stdout and stderr
+#if defined(__linux__)
+            stderr = freopen("/dev/tty", "a", stderr);
+            stdout = freopen("/dev/tty", "a", stdout);
+#elif defined(__WIN64) || defined(__WIN32)
+            stdout = freopen("CON", "w", stdout);
+            stderr = freopen("CON", "w" ,stderr);
+#endif
+
+            if (status != 0)
+            {
+                std::unique_ptr<std::fstream, std::function<void(std::fstream*)>> errorStream(new std::fstream("./.fd_stderr", std::ios::in), [](std::fstream *fd) -> void {
+                    fd->close();
+                });
+
+                if (!errorStream)
+                    throw std::runtime_error("couldn't open the error file");
+
+                std::string errorLines = "";
+                std::string tempError;
+
+                while (std::getline(*errorStream, tempError, '\n'))
+                    errorLines += tempError;
+
+                throw std::runtime_error(errorLines);
+            }
+
+//  deleting the created the fd_stdout and fd_stderr files
+#if defined(__linux__)
+            system("rm -f ./.fd_stdout ./.fd_stderr");
+#elif defined(__WIN32) || defined(__WIN64)
+            system("del /f .fd_stdout .fd_stderr");
+#endif
+
+            QMessageBox::information(nullptr, "Successful!", "the operation was run successfully!");
+        }
     }
     catch(std::runtime_error const& ex)
     {
