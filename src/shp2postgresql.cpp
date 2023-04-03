@@ -58,24 +58,23 @@ bool ShapefileConversion::Shp2Postgresql::userInputsAreValid() const
     // Validating shapefile path (the input file exists or not)
     QFile file(this->_ui->shapefilePathLineEdit->text().trimmed());
     if (!file.exists())
-        throw std::runtime_error("The Input Shapefile Path Doesn't Exists");
+        throw std::runtime_error("The input shapefile path doesn't exists");
 
     // validating input database name
     std::regex pgsqlValidDBNamePattern("^[A-Za-z][A-Za-z0-9_]{0,62}$");
     if (!std::regex_match(this->_ui->dbNameLineEdit->text().trimmed().toStdString(), pgsqlValidDBNamePattern))
-        throw std::runtime_error("The Input Database Name Is Not A Valid DB Name in PostgreSQL");
+        throw std::runtime_error("The input database name is not a valid syntax for database name in PostgreSQL");
 
     // validating input table name
     std::regex pgsqlValidTableNamePattern("^[A-Za-z][A-Za-z0-9_]{0,62}$");
     if (!std::regex_match(this->_ui->tableNameLineEdit->text().trimmed().toStdString(), pgsqlValidTableNamePattern))
-        throw std::runtime_error("The Input Table Name Is Not A Valid Table Name in PostgreSQL");
+        throw std::runtime_error("The input table name is not a valid syntax for table name in PostgreSQL");
 
     // validating ip address syntax
     // Regex to validate IP address format
-    std::regex validIpPattern("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$");
-    if (!std::regex_match(this->_ui->hostIpAddrLineEdit->text().trimmed().toStdString(), validIpPattern))
-        throw std::runtime_error("Invalid Syntax For Host IP Address");
-
+    std::regex validIpv4Pattern("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
+    if (!std::regex_match(this->_ui->hostIpAddrLineEdit->text().trimmed().toStdString(), validIpv4Pattern))
+        throw std::runtime_error("Invalid ipv4!");
 
     // Validating input username
     std::string osName;
