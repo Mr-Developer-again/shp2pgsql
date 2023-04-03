@@ -47,7 +47,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(shp2pgsql PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(shp2pgsql PRIVATE Qt${QT_VERSION_MAJOR}::Widgets "-lpq")
 
 set_target_properties(shp2pgsql PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

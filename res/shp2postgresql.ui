@@ -149,6 +149,16 @@
            <item>
             <widget class="QLineEdit" name="hostIpAddrLineEdit"/>
            </item>
+           <item>
+            <widget class="QLabel" name="portLabel">
+             <property name="text">
+              <string>Port Number:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="portSpinBox"/>
+           </item>
           </layout>
          </item>
          <item>
