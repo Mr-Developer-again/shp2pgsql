@@ -39,20 +39,20 @@ namespace ShapefileConversion
         /// @brief This method changes console's standard stream (in the other word,
         ///        this method changes flow of stdout and stderr and guides them to files
         ///        instead of console)
-        void changeConsoleStdStream();
+        static void changeConsoleStdStream();
 
         /// @brief This method acts opposite of the method above (this method, guides stdout and
         ///        stderr to console instead of files)
-        void restoreConsoleStdStream();
+        static void restoreConsoleStdStream();
 
         /// @brief This method deletes the files which "changeConosleStdStream()" method creates
-        void removeConsoleStreamFiles();
+        static void removeConsoleStreamFiles();
 
         /// @brief This method checks whether the user input table-name, does exist in the named dbName or not
         /// @note This method only checks "public" schema to find the table-name
         /// @return It returns "true" if the table does exist in the named dbName, otherwise, it returns "false"
         /// @param  these parameters are necessary for connecting and sending query to postgresql
-        bool isThereTable(std::string const& dbName,
+        static bool isThereTable(std::string const& dbName,
                           std::string const& tableName,
                           std::string const& hostAddr,
                           std::string const& port,

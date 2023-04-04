@@ -13,41 +13,41 @@
 #include <string>
 #include <functional>
 #include <fstream>
-#include <postgresql/libpq-fe.h>.
+#include <postgresql/libpq-fe.h>
 
 ShapefileConversion::Shp2Postgresql::Shp2Postgresql(QWidget *parent)
     : QMainWindow(parent),
       _ui(std::make_unique<Ui::Shp2Postgresql>())
 {
-    this->_ui->setupUi(this);
-    this->setFixedSize(this->geometry().width(), this->geometry().height());
+    _ui->setupUi(this);
+    setFixedSize(geometry().width(), geometry().height());
 
-    this->_ui->sridSpinBox->setMaximum(std::numeric_limits<int>::max());
-    this->_ui->portSpinBox->setMaximum(65535);
+    _ui->sridSpinBox->setMaximum(std::numeric_limits<int>::max());
+    _ui->portSpinBox->setMaximum(65535);
 
-    QObject::connect(this->_ui->shapefilePathBrowseButton, SIGNAL(clicked()), this, SLOT(slot_shpPathBrowseButton()));
-    QObject::connect(this->_ui->cancelButton, SIGNAL(clicked()), this, SLOT(slot_cancelButtonClicked()));
-    QObject::connect(this->_ui->importButton, SIGNAL(clicked()), this, SLOT(slot_importButtonClicked()));
+    QObject::connect(_ui->shapefilePathBrowseButton, SIGNAL(clicked()), this, SLOT(slot_shpPathBrowseButton()));
+    QObject::connect(_ui->cancelButton, SIGNAL(clicked()), this, SLOT(slot_cancelButtonClicked()));
+    QObject::connect(_ui->importButton, SIGNAL(clicked()), this, SLOT(slot_importButtonClicked()));
 }
 
 bool ShapefileConversion::Shp2Postgresql::allSectionsFilled() const
 {
-    if (this->_ui->shapefilePathLineEdit->text().isEmpty())
+    if (_ui->shapefilePathLineEdit->text().isEmpty())
         throw std::runtime_error("You should fill shapefile path section");
 
-    else if (this->_ui->dbNameLineEdit->text().isEmpty())
+    else if (_ui->dbNameLineEdit->text().isEmpty())
         throw std::runtime_error("You should fill database name section");
 
-    else if (this->_ui->tableNameLineEdit->text().isEmpty())
+    else if (_ui->tableNameLineEdit->text().isEmpty())
         throw std::runtime_error("You should fill table name section");
 
-    else if (this->_ui->hostIpAddrLineEdit->text().isEmpty())
+    else if (_ui->hostIpAddrLineEdit->text().isEmpty())
         throw std::runtime_error("You should fill host IP address section");
 
-    else if (this->_ui->portSpinBox->text().isEmpty())
+    else if (_ui->portSpinBox->text().isEmpty())
         throw std::runtime_error("You shoud fill target port number");
 
-    else if (this->_ui->usernameLineEdit->text().isEmpty())
+    else if (_ui->usernameLineEdit->text().isEmpty())
         throw std::runtime_error("You should fill Username Section");
 
     return true;
@@ -56,24 +56,24 @@ bool ShapefileConversion::Shp2Postgresql::allSectionsFilled() const
 bool ShapefileConversion::Shp2Postgresql::userInputsAreValid() const
 {
     // Validating shapefile path (the input file exists or not)
-    QFile file(this->_ui->shapefilePathLineEdit->text().trimmed());
+    QFile file(_ui->shapefilePathLineEdit->text().trimmed());
     if (!file.exists())
         throw std::runtime_error("The input shapefile path doesn't exists");
 
     // validating input database name
     std::regex pgsqlValidDBNamePattern("^[A-Za-z][A-Za-z0-9_]{0,62}$");
-    if (!std::regex_match(this->_ui->dbNameLineEdit->text().trimmed().toStdString(), pgsqlValidDBNamePattern))
+    if (!std::regex_match(_ui->dbNameLineEdit->text().trimmed().toStdString(), pgsqlValidDBNamePattern))
         throw std::runtime_error("The input database name is not a valid syntax for database name in PostgreSQL");
 
     // validating input table name
     std::regex pgsqlValidTableNamePattern("^[A-Za-z][A-Za-z0-9_]{0,62}$");
-    if (!std::regex_match(this->_ui->tableNameLineEdit->text().trimmed().toStdString(), pgsqlValidTableNamePattern))
+    if (!std::regex_match(_ui->tableNameLineEdit->text().trimmed().toStdString(), pgsqlValidTableNamePattern))
         throw std::runtime_error("The input table name is not a valid syntax for table name in PostgreSQL");
 
     // validating ip address syntax
     // Regex to validate IP address format
     std::regex validIpv4Pattern("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
-    if (!std::regex_match(this->_ui->hostIpAddrLineEdit->text().trimmed().toStdString(), validIpv4Pattern))
+    if (!std::regex_match(_ui->hostIpAddrLineEdit->text().trimmed().toStdString(), validIpv4Pattern))
         throw std::runtime_error("Invalid ipv4!");
 
     // Validating input username
@@ -95,7 +95,7 @@ bool ShapefileConversion::Shp2Postgresql::userInputsAreValid() const
     osName = "MacOS";
 #endif
 
-    if (!std::regex_match(this->_ui->usernameLineEdit->text().trimmed().toStdString(), validUsernamePattern))
+    if (!std::regex_match(_ui->usernameLineEdit->text().trimmed().toStdString(), validUsernamePattern))
     {
         char* message;
         sprintf(message, "The input username is not a valid username for %s system", osName.c_str());
@@ -115,7 +115,7 @@ void ShapefileConversion::Shp2Postgresql::slot_shpPathBrowseButton()
     );
 
     if (!filePath.isEmpty())
-        this->_ui->shapefilePathLineEdit->setText(filePath);
+        _ui->shapefilePathLineEdit->setText(filePath);
 }
 
 void ShapefileConversion::Shp2Postgresql::slot_cancelButtonClicked()
@@ -123,12 +123,14 @@ void ShapefileConversion::Shp2Postgresql::slot_cancelButtonClicked()
     this->close();
 }
 
+// static member-function
 void ShapefileConversion::Shp2Postgresql::changeConsoleStdStream()
 {
     freopen("./.fd_stderr", "w", stderr);
     freopen("./.fd_stdout", "w", stdout);
 }
 
+// static member-function
 void ShapefileConversion::Shp2Postgresql::restoreConsoleStdStream()
 {
 #if defined(__linux__)
@@ -140,6 +142,7 @@ void ShapefileConversion::Shp2Postgresql::restoreConsoleStdStream()
 #endif
 }
 
+// static member-function
 void ShapefileConversion::Shp2Postgresql::removeConsoleStreamFiles()
 {
 #if defined(__linux__)
@@ -149,6 +152,7 @@ void ShapefileConversion::Shp2Postgresql::removeConsoleStreamFiles()
 #endif
 }
 
+// static member-function
 bool ShapefileConversion::Shp2Postgresql::isThereTable(std::string const& dbName,
                                                        std::string const& tableName,
                                                        std::string const& hostAddr,
@@ -198,23 +202,23 @@ void ShapefileConversion::Shp2Postgresql::slot_importButtonClicked()
 {
     try
     {
-        if (this->allSectionsFilled() and this->userInputsAreValid())
+        if (allSectionsFilled() and userInputsAreValid())
         {
-            std::string shapefilePath = this->_ui->shapefilePathLineEdit->text().toStdString();
-            std::string srid = this->_ui->sridSpinBox->text().toStdString();
-            std::string dbName = this->_ui->dbNameLineEdit->text().toStdString();
-            std::string tableName = this->_ui->tableNameLineEdit->text().toStdString();
-            std::string hostAddr = this->_ui->hostIpAddrLineEdit->text().toStdString();
-            std::string portNumber = this->_ui->portSpinBox->text().toStdString();
-            std::string username = this->_ui->usernameLineEdit->text().toStdString();
+            std::string shapefilePath = _ui->shapefilePathLineEdit->text().toStdString();
+            std::string srid = _ui->sridSpinBox->text().toStdString();
+            std::string dbName = _ui->dbNameLineEdit->text().toStdString();
+            std::string tableName = _ui->tableNameLineEdit->text().toStdString();
+            std::string hostAddr = _ui->hostIpAddrLineEdit->text().toStdString();
+            std::string portNumber = _ui->portSpinBox->text().toStdString();
+            std::string username = _ui->usernameLineEdit->text().toStdString();
 
-            if (this->isThereTable(dbName, tableName, hostAddr, portNumber, username))
+            if (isThereTable(dbName, tableName, hostAddr, portNumber, username))
             {
                 QMessageBox::warning(nullptr, "Table Exists!", "The named table already exists in dbName->public(schema)");
                 return;
             }
 
-            this->changeConsoleStdStream();
+            changeConsoleStdStream();
 
             std::stringstream command;
             command << "shp2pgsql -s " << srid     << " -I " << shapefilePath << " "    << tableName
@@ -223,7 +227,7 @@ void ShapefileConversion::Shp2Postgresql::slot_importButtonClicked()
             int status = system(command.str().c_str());
 
             // restoring stdout and stderr
-            this->restoreConsoleStdStream();
+            restoreConsoleStdStream();
 
             if (status != 0)
             {
@@ -244,6 +248,8 @@ void ShapefileConversion::Shp2Postgresql::slot_importButtonClicked()
             }
 
             QMessageBox::information(nullptr, "Successful!", "the operation was run successfully!");
+
+            removeConsoleStreamFiles();
         }
     }
     catch(std::runtime_error const& ex)
