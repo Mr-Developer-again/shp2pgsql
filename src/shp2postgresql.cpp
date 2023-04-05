@@ -22,33 +22,13 @@ ShapefileConversion::Shp2Postgresql::Shp2Postgresql(QWidget *parent)
     _ui->setupUi(this);
     setFixedSize(geometry().width(), geometry().height());
 
-    _ui->sridSpinBox->setMaximum(std::numeric_limits<int>::max());
-    _ui->portSpinBox->setMaximum(65535);
-
     QObject::connect(_ui->shapefilePathBrowseButton, SIGNAL(clicked()), this, SLOT(slot_shpPathBrowseButton()));
-    QObject::connect(_ui->cancelButton, SIGNAL(clicked()), this, SLOT(slot_cancelButtonClicked()));
-    QObject::connect(_ui->importButton, SIGNAL(clicked()), this, SLOT(slot_importButtonClicked()));
 }
 
 bool ShapefileConversion::Shp2Postgresql::allSectionsFilled() const
 {
     if (_ui->shapefilePathLineEdit->text().isEmpty())
         throw std::runtime_error("You should fill shapefile path section");
-
-    else if (_ui->dbNameLineEdit->text().isEmpty())
-        throw std::runtime_error("You should fill database name section");
-
-    else if (_ui->tableNameLineEdit->text().isEmpty())
-        throw std::runtime_error("You should fill table name section");
-
-    else if (_ui->hostIpAddrLineEdit->text().isEmpty())
-        throw std::runtime_error("You should fill host IP address section");
-
-    else if (_ui->portSpinBox->text().isEmpty())
-        throw std::runtime_error("You shoud fill target port number");
-
-    else if (_ui->usernameLineEdit->text().isEmpty())
-        throw std::runtime_error("You should fill Username Section");
 
     return true;
 }
@@ -60,47 +40,10 @@ bool ShapefileConversion::Shp2Postgresql::userInputsAreValid() const
     if (!file.exists())
         throw std::runtime_error("The input shapefile path doesn't exists");
 
-    // validating input database name
-    std::regex pgsqlValidDBNamePattern("^[A-Za-z][A-Za-z0-9_]{0,62}$");
-    if (!std::regex_match(_ui->dbNameLineEdit->text().trimmed().toStdString(), pgsqlValidDBNamePattern))
-        throw std::runtime_error("The input database name is not a valid syntax for database name in PostgreSQL");
-
     // validating input table name
     std::regex pgsqlValidTableNamePattern("^[A-Za-z][A-Za-z0-9_]{0,62}$");
     if (!std::regex_match(_ui->tableNameLineEdit->text().trimmed().toStdString(), pgsqlValidTableNamePattern))
         throw std::runtime_error("The input table name is not a valid syntax for table name in PostgreSQL");
-
-    // validating ip address syntax
-    // Regex to validate IP address format
-    std::regex validIpv4Pattern("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$");
-    if (!std::regex_match(_ui->hostIpAddrLineEdit->text().trimmed().toStdString(), validIpv4Pattern))
-        throw std::runtime_error("Invalid ipv4!");
-
-    // Validating input username
-    std::string osName;
-
-#if defined(__linux__)
-    // linux username pattern
-    std::regex validUsernamePattern("^[a-z_][a-z0-9_-]{0,31}$");
-    osName = "Linux";
-
-    // windows username pattern
-#elif defined(_WIN32) || defined(_WIN64)
-    std::regex validUsernamePattern("^[a-zA-Z][a-zA-Z0-9._-]{0,19}$");
-    osName = "Windows";
-
-    // osx (macOS) username pattern
-#elif defined(__APPLE__)
-    std::regex validUsernamePattern("^[a-zA-Z][a-zA-Z0-9._-]{0,30}$");
-    osName = "MacOS";
-#endif
-
-    if (!std::regex_match(_ui->usernameLineEdit->text().trimmed().toStdString(), validUsernamePattern))
-    {
-        char* message;
-        sprintf(message, "The input username is not a valid username for %s system", osName.c_str());
-        throw std::runtime_error(message);
-    }
 
     return true;
 }
@@ -146,9 +89,9 @@ void ShapefileConversion::Shp2Postgresql::restoreConsoleStdStream()
 void ShapefileConversion::Shp2Postgresql::removeConsoleStreamFiles()
 {
 #if defined(__linux__)
-            system("rm -f ./.fd_stdout ./.fd_stderr");
+    system("rm -f ./.fd_stdout ./.fd_stderr");
 #elif defined(__WIN32) || defined(__WIN64)
-            system("del /f .fd_stdout .fd_stderr");
+    system("del /f .fd_stdout .fd_stderr");
 #endif
 }
 
@@ -205,12 +148,13 @@ void ShapefileConversion::Shp2Postgresql::slot_importButtonClicked()
         if (allSectionsFilled() and userInputsAreValid())
         {
             std::string shapefilePath = _ui->shapefilePathLineEdit->text().toStdString();
-            std::string srid = _ui->sridSpinBox->text().toStdString();
-            std::string dbName = _ui->dbNameLineEdit->text().toStdString();
             std::string tableName = _ui->tableNameLineEdit->text().toStdString();
-            std::string hostAddr = _ui->hostIpAddrLineEdit->text().toStdString();
-            std::string portNumber = _ui->portSpinBox->text().toStdString();
-            std::string username = _ui->usernameLineEdit->text().toStdString();
+
+            std::string srid = "4326";
+            std::string username = "postgres";
+            std::string dbName = "test";
+            std::string hostAddr = "127.0.0.1";
+            std::string portNumber = "5432";
 
             if (isThereTable(dbName, tableName, hostAddr, portNumber, username))
             {
