@@ -22,7 +22,14 @@ ShapefileConversion::Shp2Postgresql::Shp2Postgresql(QWidget *parent)
     _ui->setupUi(this);
     setFixedSize(geometry().width(), geometry().height());
 
+    this->connections();
+}
+
+void ShapefileConversion::Shp2Postgresql::connections()
+{
     QObject::connect(_ui->shapefilePathBrowseButton, SIGNAL(clicked()), this, SLOT(slot_shpPathBrowseButton()));
+    QObject::connect(_ui->cancelPushButton, SIGNAL(clicked()), this, SLOT(slot_cancelButtonClicked()));
+    QObject::connect(_ui->importPushButton, SIGNAL(clicked()), this, SLOT(slot_importButtonClicked()));
 }
 
 bool ShapefileConversion::Shp2Postgresql::allSectionsFilled() const

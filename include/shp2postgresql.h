@@ -23,6 +23,9 @@ namespace ShapefileConversion
         virtual ~Shp2Postgresql() = default;
 
     protected:
+        /// @brief This method just contains connections for Qt objects inside the ui
+        void connections();
+
         /// @brief This method checks whether all sections in the form
         ///        are filled or not .
         /// @return If all fields have been filled, this method returns true,
